@@ -1,0 +1,90 @@
+import pygame
+import pygame_gui
+import random
+import re
+
+pygame.init()
+
+
+
+width, height = 800, 600
+screen = pygame.display.set_mode((width, height))
+pygame.display.set_caption("First Proje")
+
+manager = pygame_gui.UIManager((width, height))
+
+custom_font = pygame.font.Font(None, 36)
+
+def flash_screen(color, duration=0.3):
+    flash_surface = pygame.Surface((width, height))
+    flash_surface.fill(color)
+    screen.blit(flash_surface, (0, 0))
+    pygame.display.flip()
+    pygame.time.wait(int(duration * 1000))
+
+def generate_problem():
+    num1 = random.randint(1, 100)
+    num2 = random.randint(1, 100)
+    return f"What is {num1} + {num2}?"
+
+problem_label = pygame_gui.elements.UILabel(
+    relative_rect=pygame.Rect((300, 100), (200, 80)),
+    text= generate_problem(),
+    manager=manager,
+)
+
+text_input = pygame_gui.elements.UITextEntryLine(
+    relative_rect=pygame.Rect((300, 400), (200, 45)),
+    manager=manager,
+)
+
+'''
+result_label = pygame_gui.elements.UILabel(
+    relative_rect=pygame.Rect((300, 480), (200, 45)),
+    text="Result:",
+    manager=manager,
+)
+'''
+
+clock = pygame.time.Clock()
+
+running = True
+while running:
+    time_delta = clock.tick(60) / 1000.0
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+            user_input = text_input.get_text()
+            
+            try:
+                user_input = int(user_input)
+            except ValueError:
+                print("Invalid problem format:", problem_label.text)
+                continue
+            
+            match = re.match(r"What is (\d+) \+ (\d+)\?", problem_label.text)
+            num1 = int(match.group(1))
+            num2 = int(match.group(2))
+
+            correct_answer = num1 + num2
+
+            if user_input == correct_answer:
+                flash_screen((0, 255, 0)) 
+            else:
+                flash_screen((255, 0, 0)) 
+
+            text_input.set_text("")
+            problem_label.set_text(generate_problem())
+
+        manager.process_events(event)
+
+    manager.update(time_delta)
+
+    screen.fill((255, 255, 255))
+    manager.draw_ui(screen)
+
+    pygame.display.flip()
+
+pygame.quit()
